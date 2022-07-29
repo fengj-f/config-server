@@ -1,2 +1,4 @@
 name: fengj-f
 password: 123456789
+server:
+  port: 1008
