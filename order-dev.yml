@@ -1,0 +1,90 @@
+server:
+  port: 1005
+
+spring:
+  application:
+    name: order-server
+
+eureka:
+  instance:
+    #显示真实IP 显示DS replicas副本集
+    prefer-ip-address: true
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+    #每3秒发送心跳,证明存活
+    lease-renewal-interval-in-seconds: 3
+    #告知服务端超过5秒未收到当前服务心跳视为挂掉
+    lease-expiration-duration-in-seconds: 5
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:1001/eureka/
+
+feign:
+  httpclient:
+    #使用ApacheHttpClient，默认true
+    enabled: true
+    #是否关闭https证书校验
+    disableSslValidation: false
+    #全局最大连接数
+    maxConnections: 200
+    #单个HOST最大连接数
+    maxConnectionsPerRoute: 50
+    #是否支持重定向
+    followRedirects: true
+    #定时检测连接存活情况任的调度频率
+    connectionTimerRepeat: 3000
+  client:
+    config:
+      #默认配置
+      default:
+        #连接超时时间
+        connectTimeout: 3000
+        #响应超时时间
+        readTimeout: 5000
+      #服务级别配置
+      payment-server:
+        #连接超时时间
+        connectTimeout: 3000
+        #响应超时时间
+        readTimeout: 10000
+  #启用服务保护 - 可以进行降级处理
+  hystrix:
+    enabled: true
+
+#断路器的
+hystrix:
+  command:
+    #默认配置
+    default:
+      circuitBreaker:
+        #开启断路器
+        enabled: true
+        #设置达到熔断条件的滑动窗口内最小请求量为20个
+        requestVolumeThreshold: 20
+        #设置熔断后休眠窗口时间为5秒
+        sleepWindowInMilliseconds: 5
+        #设置达到熔断条件的错误率百分比为80%
+        errorThresholdPercentage: 80
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000  # 调用者执行的超时时间默认是1s
+          #隔离级别-信号量隔离；线程隔离 信号量隔离级别不支持超时策略，只有线程隔离支持，默认为线程隔离（建议后续可以按照服务配置线程和超时时间）
+#          strategy: SEMAPHORE
+#          semaphore:
+            #设置单个命令最大并发数为50
+#            maxConcurrentRequests: 50
+      #关闭缓存
+      requestCache:
+        enabled: false
+    #接口级别方式配置
+    PaymentFeignClient#getServicesCustom():
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000  # 调用者执行的超时时间默认是1s
+    #服务级别方式配置 三种模式支持自定义
+    payment-server:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
